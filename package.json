@@ -1,0 +1,19 @@
+{
+  "name": "com.rothiotome.very-simple-twitch-chat",
+  "version": "1.0.0",
+  "displayName": "Very Simple Twitch Chat",
+  "description": "This is a Package that allows you to use a very simple anonymous connection to the Twitch Chat",
+  "unity": "2022.3",
+  "unityRelease": "2f1",
+  "dependencies": { },
+ "keywords": [
+    "twitch",
+    "chat"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Rothio Tome",
+    "email": "rothiotome@gmail.com",
+    "url": "https://www.rociotome.com"
+  }
+}
