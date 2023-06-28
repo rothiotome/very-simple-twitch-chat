@@ -1,47 +1,40 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(TwitchController))]
-public class TwitchControllerEditor : Editor
+namespace TwitchChat
 {
-    private SerializedProperty autoConnect;
-    private SerializedProperty defaultChannelName;
-    private SerializedProperty secondsToRetry;
-    private SerializedProperty debugMode;
-
-    void OnEnable()
+    [CustomEditor(typeof(TwitchController))]
+    public class TwitchControllerEditor : Editor
     {
-        autoConnect = serializedObject.FindProperty("autoConnect");
-        defaultChannelName = serializedObject.FindProperty("defaultChannelName");
-        secondsToRetry = serializedObject.FindProperty("secondsToRetry");
-        debugMode = serializedObject.FindProperty("debugMode");
-    }
+        private GUIStyle greenLabelStyle = new GUIStyle(EditorStyles.label);
+        private GUIStyle redLabelStyle = new GUIStyle(EditorStyles.label);
 
-    public override void OnInspectorGUI()
-    {
-        TwitchController twitchController = (TwitchController)target;
-        autoConnect.boolValue = EditorGUILayout.Toggle("Auto Connect", autoConnect.boolValue);
+        private SerializedProperty isConnectedToIRCProp;
+        private SerializedProperty hasJoinedChannelProp;
 
-        if (autoConnect.boolValue)
+        private void OnEnable()
         {
-            defaultChannelName.stringValue = EditorGUILayout.TextField("Channel Name", defaultChannelName.stringValue);
+            greenLabelStyle.normal.textColor = Color.green;
+            redLabelStyle.normal.textColor = Color.red;
+
+            isConnectedToIRCProp = serializedObject.FindProperty("isConnectedToIRC");
+            hasJoinedChannelProp = serializedObject.FindProperty("hasJoinedChannel");
         }
 
-        secondsToRetry.floatValue = EditorGUILayout.FloatField("Seconds To Retry", secondsToRetry.floatValue);
-        debugMode.boolValue = EditorGUILayout.Toggle("Debug Mode", debugMode.boolValue);
+        public override void OnInspectorGUI()
+        {
+            GUIStyle greenLabelStyle = new GUIStyle(EditorStyles.label);
+            greenLabelStyle.normal.textColor = Color.green;
 
-        GUIStyle greenLabelStyle = new GUIStyle(EditorStyles.label);
-        greenLabelStyle.normal.textColor = Color.green;
+            GUIStyle redLabelStyle = new GUIStyle(EditorStyles.label);
+            redLabelStyle.normal.textColor = Color.red;
 
-        GUIStyle redLabelStyle = new GUIStyle(EditorStyles.label);
-        redLabelStyle.normal.textColor = Color.red;
-
-        EditorGUILayout.LabelField("Connected to IRC",
-            twitchController.isConnectedToIRC ? "Connected" : "Not Connected",
-            twitchController.isConnectedToIRC ? greenLabelStyle : redLabelStyle);
-        EditorGUILayout.LabelField("Channel Joined", twitchController.hasJoinedChannel ? "YAY" : "Not yet",
-            twitchController.hasJoinedChannel ? greenLabelStyle : redLabelStyle);
-
-        serializedObject.ApplyModifiedProperties();
+            TwitchController twitchController = (TwitchController)target;
+            EditorGUILayout.LabelField("Connected to IRC",
+                twitchController.isConnectedToIRC ? "Connected" : "Not Connected",
+                twitchController.isConnectedToIRC ? greenLabelStyle : redLabelStyle);
+            EditorGUILayout.LabelField("Channel Joined", twitchController.hasJoinedChannel ? "YAY" : "Not yet",
+                twitchController.hasJoinedChannel ? greenLabelStyle : redLabelStyle);
+        }
     }
 }
