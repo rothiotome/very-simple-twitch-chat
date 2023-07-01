@@ -44,8 +44,8 @@ namespace TwitchChat
         private StreamReader input;
         private StreamWriter output;
         private NetworkStream networkStream;
-        private List<string> recievedMsgs = new();
-        private Queue<string> commandQueue = new();
+        private List<string> recievedMsgs = new List<string>();
+        private Queue<string> commandQueue = new Queue<string>();
 
         private float timer;
         private float retryTimer;
