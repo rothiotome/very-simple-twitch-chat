@@ -72,7 +72,7 @@ public class TestingChat : MonoBehaviour
     }
 }
 ```
-Once you are connection, you can send messages using the ``TwitchController.SendMessage("message")`` method.
+Once you are connection, you can send messages using the ``TwitchController.SendChatMessage("message")`` static method.
 ## Receiving Chat Messages
 To receive the Twitch chat messages, subscribe to the `onTwitchMessageReceived` static delegates.
 
