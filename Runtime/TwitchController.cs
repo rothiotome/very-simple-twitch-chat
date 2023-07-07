@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -14,6 +15,8 @@ namespace TwitchChat
 
         private TwitchSettings settings;
 
+        private IRCTags channelTags;
+
         #region SINGLETON
 
         private static TwitchController instance;
@@ -28,13 +31,13 @@ namespace TwitchChat
 
         #endregion
 
-        public delegate void OnTwitchCommandReceived(string user, string command, List<string> arguments);
-
-        public static OnTwitchCommandReceived onTwitchCommandReceived;
-
-        public delegate void OnTwitchMessageReceived(string user, string message);
+        public delegate void OnTwitchMessageReceived(Chatter chatter);
 
         public static OnTwitchMessageReceived onTwitchMessageReceived;
+        
+        public delegate void OnChannelTagsReceived(IRCTags tags);
+
+        public static OnChannelTagsReceived onChannelTagsReceived;
 
         public delegate void OnChannelJoined();
 
@@ -51,8 +54,12 @@ namespace TwitchChat
         private float retryTimer;
 
         private int connectionTries;
-
-        public bool IsDebugMode => settings.debugMode;
+        
+        private readonly int sessionRandom = DateTime.Now.Second;
+        
+        
+        public void Ping() => SendCommand("PING :tmi.twitch.tv");
+        public void Pong() => SendCommand("PONG :tmi.twitch.tv");
 
         private void Update()
         {
@@ -71,12 +78,7 @@ namespace TwitchChat
                 recievedMsgs.Clear();
             }
         }
-
-        public static void Login(string channel, TwitchSettings settings)
-        {
-            UpdateTwitchInstance(TrimChannelName(channel), settings);
-        }
-
+        
         public static void Login(string channel)
         {
             // Attempt to load the TwitchSettings asset from Resources folder
@@ -91,6 +93,33 @@ namespace TwitchChat
             }
 
             UpdateTwitchInstance(TrimChannelName(channel), defaultTwitchSettings);
+        }
+
+        public static void Login(string channel, TwitchSettings settings)
+        {
+            UpdateTwitchInstance(TrimChannelName(channel), settings);
+        }
+        
+        public static void Login(string channel, TwitchLoginInfo loginInfo)
+        {
+            
+            //TwitchSettings defaultTwitchSettings = Resources.Load<TwitchSettings>("defaultTwitchSettings");
+            TwitchSettings defaultTwitchSettings = Resources.Load<TwitchSettings>("defaultTwitchSettings");
+
+            // If the asset doesn't exist, create a new
+            if (defaultTwitchSettings == null)
+            {
+                defaultTwitchSettings = ScriptableObject.CreateInstance<TwitchSettings>();
+                // Optionally, you can initialize defaultTwitchSettings with default values
+                // defaultTwitchSettings.InitializeDefaultValues();
+            }
+
+            defaultTwitchSettings.useAnonymousConnection = false;
+            defaultTwitchSettings.oAuthToken = loginInfo.password;
+            defaultTwitchSettings.username = loginInfo.user;
+
+            UpdateTwitchInstance(TrimChannelName(channel), defaultTwitchSettings);
+
         }
 
         private static string TrimChannelName(string channel)
@@ -134,11 +163,11 @@ namespace TwitchChat
             output = new StreamWriter(networkStream);
 
             TwitchLoginInfo loginInfo = settings.GetLoginInfo();
+            
 
-            output.WriteLine("PASS " + loginInfo.password);
-            output.WriteLine(
-                $"NICK {loginInfo.user}");
-            output.Flush();
+            commandQueue.Enqueue($"PASS {loginInfo.password.ToLower()}");
+            commandQueue.Enqueue($"NICK {loginInfo.user.ToLower()}");
+            commandQueue.Enqueue("CAP REQ :twitch.tv/tags twitch.tv/commands");
         }
 
         private void IRCInputProcedure()
@@ -149,9 +178,6 @@ namespace TwitchChat
                 if (retryTimer > settings.secondsToRetry)
                 {
                     retryTimer = 0;
-#if UNITY_EDITOR
-                    Debug.Log("Retry");
-#endif
                     connectionTries++;
                     if (connectionTries >= settings.maxRetry)
                     {
@@ -173,31 +199,8 @@ namespace TwitchChat
 #if UNITY_EDITOR
             if (settings.debugMode) Debug.Log(buffer);
 #endif
-            //was message?
-            if (buffer.Contains("PRIVMSG #"))
-            {
-                recievedMsgs.Add(buffer);
-            }
 
-            //Send pong reply to any ping messages
-            if (buffer.StartsWith("PING "))
-            {
-                SendCommand(buffer.Replace("PING", "PONG"));
-            }
-
-            //After server sends 001 command, we can join a channel
-            if (!isConnectedToIRC && buffer.Split(' ')[1] == "001")
-            {
-                SendCommand("JOIN #" + currentChannelName.ToLower());
-                isConnectedToIRC = true;
-            }
-
-            //After server sends 353 command, the channel has successfully joined
-            if (!hasJoinedChannel && buffer.Split(' ')[1] == "353")
-            {
-                hasJoinedChannel = true;
-                onChannelJoined?.Invoke();
-            }
+            recievedMsgs.Add(buffer);
         }
 
         private void IRCOutputProcedure()
@@ -219,6 +222,53 @@ namespace TwitchChat
                 }
             }
         }
+        
+        private void ParseChatMessage(string msg)
+        {
+            string ircString = msg;
+            string tagString = string.Empty;
+
+            // Parsing the raw IRC lines...
+
+            if (msg[0] == '@')
+            {
+                int ind = msg.IndexOf(' ');
+                tagString = msg.Substring(0, ind);
+                ircString = msg.Substring(ind).TrimStart();
+            }
+
+            if (ircString[0] == ':')
+            {
+                string type = ircString.Substring(ircString.IndexOf(' ')).TrimStart();
+                type = type.Substring(0, type.IndexOf(' '));
+
+                switch (type)
+                {
+                    case "PRIVMSG": // = Chat message
+                        HandlePRIVMSG(ircString, tagString);
+                        break;
+                    case "USERSTATE": // = Userstate
+                        HandleUSERSTATE(ircString, tagString);
+                        break;
+                    case "NOTICE": // = Notice
+                        HandleNOTICE(ircString, tagString);
+                        break;
+                    case "ROOMSTATE": // RoomState
+                        HandleROOMSTATE(ircString, tagString);
+                        break;
+
+                    // RPL messages
+                    case "353": // = Successful channel join
+                    case "001": // = Successful IRC connection
+                        HandleRPL(type);
+                        break;
+                }
+            }
+
+            // Respond to PING messages with PONG
+            if (msg.StartsWith("PING"))
+                Pong();
+        }
 
         private void SendCommand(string cmd)
         {
@@ -228,25 +278,86 @@ namespace TwitchChat
             }
         }
 
-        private void ParseChatMessage(string msg)
+        public void SendChatMessage(string message)
         {
-            int msgIndex = msg.IndexOf("PRIVMSG #");
-            string msgString = msg.Substring(msgIndex + currentChannelName.Length + 11);
-            string user = msg.Substring(1, msg.IndexOf('!') - 1);
-            if (msgString.Length > 0)
+            if (message.Length <= 0)
             {
-                if (msgString[0].Equals('!'))
-                {
-                    List<string> arguments = new List<string>(msgString.Split(' '));
-                    string command = arguments[0].Substring(1);
-                    arguments.RemoveAt(0);
-                    onTwitchCommandReceived?.Invoke(user, command.ToLower(), arguments);
-                }
-                else
-                {
-                    onTwitchMessageReceived?.Invoke(user, msgString);
-                }
+                Debug.LogWarning($"{Tags.write} Tried sending an empty chat message");
+                return;
+            }
+
+            if (settings.useAnonymousConnection)
+            {
+                Debug.LogWarning("You can't send messages using anonymous connection. Please use a OAuth Token with writing permissions instead");
+                return;
+            }
+
+            // Place the chat message into the write queue
+            SendCommand("PRIVMSG #" + currentChannelName + " :" + message);
+        }
+
+        #region Response Handlers
+
+        private void HandlePRIVMSG(string ircString, string tagString)
+        {
+            var login = ParseHelper.ParseLoginName(ircString);
+            var channel = ParseHelper.ParseChannel(ircString);
+            var message = ParseHelper.ParseMessage(ircString);
+            var tags = ParseHelper.ParseTags(tagString);
+
+            // Not all users have set their Twitch name color, so we need to check for that
+            if (tags.colorHex.Length <= 0)
+                tags.colorHex = settings.useRandomColorForUndefined
+                    ? ChatColors.GetRandomNameColor(sessionRandom, login)
+                    : "#FFFFFF";
+
+            // Sort emotes by startIndex to match emote order in the actual chat message
+            if (tags.emotes.Length > 0)
+            {
+                Array.Sort(tags.emotes, (a, b) =>
+                    a.indexes[0].startIndex.CompareTo(b.indexes[0].startIndex));
+            }
+
+            // Queue new chatter object
+            onTwitchMessageReceived?.Invoke(new Chatter(login, channel, message, tags));
+        }
+        
+        private void HandleUSERSTATE(string ircString, string tagString)
+        {
+            IRCTags tags = ParseHelper.ParseTags(tagString);
+        }
+        
+        private void HandleNOTICE(string ircString, string tagString)
+        {
+            if (ircString.Contains(":Login authentication failed"))
+            {
+                Debug.Log("Login authentication failed");
             }
         }
+        
+        private void HandleROOMSTATE(string ircString, string tagString)
+        {
+            channelTags = ParseHelper.ParseTags(tagString);
+            onChannelTagsReceived?.Invoke(channelTags);
+        }
+        
+        private void HandleRPL(string type)
+        {
+            switch (type)
+            {
+                case "001":
+                    SendCommand("JOIN #" + currentChannelName.ToLower());
+                    isConnectedToIRC = true;
+                    
+                    hasJoinedChannel = true;
+                    onChannelJoined?.Invoke();
+                    break;
+                case "353":
+
+                    break;
+            }
+        }
+
+        #endregion
     }
 }

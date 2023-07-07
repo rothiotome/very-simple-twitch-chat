@@ -6,8 +6,6 @@ public class TwitchSettings : ScriptableObject
     public float secondsToRetry = 5;
     public int maxRetry = 10;
     public bool debugMode = false;
-
-
     public bool preserveAcrossScenes = true;
 
     public bool useAnonymousConnection = true;
@@ -18,12 +16,13 @@ public class TwitchSettings : ScriptableObject
     public string server = "irc.chat.twitch.tv";
     public string anonUsername = "justinfan5555";
     public string anonPassword = "kappa";
+    public bool useRandomColorForUndefined = true;
 
     public TwitchLoginInfo GetLoginInfo()
     {
         return useAnonymousConnection
             ? new TwitchLoginInfo(anonUsername, anonPassword)
-            : new TwitchLoginInfo(username, oAuthToken.StartsWith("oauth: ") ? oAuthToken : $"$oauth: {oAuthToken}");
+            : new TwitchLoginInfo(username, oAuthToken.StartsWith("oauth:") ? oAuthToken : $"oauth:{oAuthToken}");
     }
 }
 

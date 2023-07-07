@@ -11,7 +11,7 @@ namespace TwitchChat
 
         private SerializedProperty isConnectedToIRCProp;
         private SerializedProperty hasJoinedChannelProp;
-
+        
         private void OnEnable()
         {
             greenLabelStyle.normal.textColor = Color.green;

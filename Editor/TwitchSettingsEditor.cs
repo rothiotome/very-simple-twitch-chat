@@ -22,6 +22,7 @@ public class TwitchSettingsEditor : Editor
     private SerializedProperty serverProp;
     private SerializedProperty anonUsernameProp;
     private SerializedProperty anonPasswordProp;
+    private SerializedProperty useRandomColorForUndefinedProp;
 
     private GUIStyle redLabelStyle;
 
@@ -38,6 +39,7 @@ public class TwitchSettingsEditor : Editor
         serverProp = serializedObject.FindProperty("server");
         anonUsernameProp = serializedObject.FindProperty("anonUsername");
         anonPasswordProp = serializedObject.FindProperty("anonPassword");
+        useRandomColorForUndefinedProp = serializedObject.FindProperty("useRandomColorForUndefined");
     }
 
     public override void OnInspectorGUI()
@@ -62,12 +64,14 @@ public class TwitchSettingsEditor : Editor
         EditorGUILayout.PropertyField(preserveAcrossScenesProp,
             new GUIContent("Preserve across Scenes",
                 "Once you connect to the Twitch Channel, the connection will remain active across the scenes"));
+        EditorGUILayout.PropertyField(useRandomColorForUndefinedProp,
+            new GUIContent("Use Random Color For Undefined",
+                "Return a Random default Twitch color instead white when the color is undefined"));
         EditorGUILayout.Space();
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.PrefixLabel("Retry Connection");
-
-
+        
         
         EditorGUILayout.BeginVertical();
         
@@ -107,7 +111,6 @@ public class TwitchSettingsEditor : Editor
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
-            
 
         }
         EditorGUILayout.Space();
