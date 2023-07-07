@@ -7,11 +7,18 @@ A very simple plugin to connect your Unity games to the Twitch chat. It's possib
 * Type the repository URL in the text box: `https://github.com/rothiotome/very-simple-twitch-chat.git`
 
 # How to use
+
+Import TwitchChat namespace in each class/script you want to use it:
+```CSharp
+using TwitchChat
+```
+
 ## Login using simple anonymous connection
 This is the easiest way to use the plugin. You can use ``TwitchController.Login("Channel_name")`` to connect to the channel without needing  a token or any settings customization.
 
 ```CSharp
 using UnityEngine;
+using TwitchChat;
 
 public class TestingChat : MonoBehaviour
 {
@@ -31,6 +38,7 @@ It's possible to create new custom Twitch settings directly in your project to h
 ```CSharp
 using System.Collections.Generic;
 using UnityEngine;
+using TwitchChat;
 
 public class TestingChat : MonoBehaviour
 {
@@ -52,6 +60,7 @@ To send messages the Twitch chat, you need writting permissions. Anonymous conne
 ```CSharp
 using System.Collections.Generic;
 using UnityEngine;
+using TwitchChat;
 
 public class TestingChat : MonoBehaviour
 {
@@ -71,6 +80,7 @@ To receive the Twitch chat messages and commands, subscribe to the `onChannelJoi
 ```CSharp
 using System.Collections.Generic;
 using UnityEngine;
+using TwitchChat;
 
 public class TestingChat : MonoBehaviour
 {
