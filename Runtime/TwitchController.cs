@@ -278,7 +278,7 @@ namespace TwitchChat
             }
         }
 
-        public void SendChatMessage(string message)
+        public static void SendChatMessage(string message)
         {
             if (message.Length <= 0)
             {
@@ -286,14 +286,14 @@ namespace TwitchChat
                 return;
             }
 
-            if (settings.useAnonymousConnection)
+            if (instance.settings.useAnonymousConnection)
             {
                 Debug.LogWarning("You can't send messages using anonymous connection. Please use a OAuth Token with writing permissions instead");
                 return;
             }
 
             // Place the chat message into the write queue
-            SendCommand("PRIVMSG #" + currentChannelName + " :" + message);
+            instance.SendCommand("PRIVMSG #" + instance.currentChannelName + " :" + message);
         }
 
         #region Response Handlers

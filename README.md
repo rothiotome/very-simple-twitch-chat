@@ -69,13 +69,12 @@ public class TestingChat : MonoBehaviour
     void Start()
     {
         TwitchController.Login(channelName, new TwitchLoginInfo("Username", "OauthToken"));
-
     }
 }
 ```
 Once you are connection, you can send messages using the ``TwitchController.SendMessage("message")`` method.
 ## Receiving Chat Messages
-To receive the Twitch chat messages and commands, subscribe to the `onChannelJoined`, `onTwitchMessageReceived` and `onTwitchCommandReceived` static delegates.
+To receive the Twitch chat messages, subscribe to the `onTwitchMessageReceived` static delegates.
 
 ```CSharp
 using System.Collections.Generic;
@@ -86,19 +85,12 @@ public class TestingChat : MonoBehaviour
 {
     void Start()
     {
-        TwitchController.onChannelJoined += ChannelJoined;
         TwitchController.onTwitchMessageReceived += OnMessageReceived;
     }
 
     private void OnDestroy()
     {
-        TwitchController.onChannelJoined -= ChannelJoined;
         TwitchController.onTwitchMessageReceived -= OnMessageReceived;
-    }
-
-    private void ChannelJoined()
-    {
-        Debug.Log("Channel Joined");
     }
 
     private void OnMessageReceived(Chatter chatter)
@@ -107,6 +99,10 @@ public class TestingChat : MonoBehaviour
     }
 }
 ```
+
+## Sending Chat Messages
+To send chat messages you can use the ``TwitchController.SendChatMessage("message")`` static method. Sending chat messages is only available when you use OAuth connection method with a Token that has writting permissions.
+
 
 > Note: Sometimes the Channel Joined event occurs a few seconds before the messages start arriving. Please be aware of the delay
 
