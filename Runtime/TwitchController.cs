@@ -58,8 +58,8 @@ namespace TwitchChat
         private readonly int sessionRandom = DateTime.Now.Second;
         
         
-        public void Ping() => SendCommand("PING :tmi.twitch.tv");
-        public void Pong() => SendCommand("PONG :tmi.twitch.tv");
+        public static void Ping() => SendCommand("PING :tmi.twitch.tv");
+        private static void Pong() => SendCommand("PONG :tmi.twitch.tv");
 
         private void Update()
         {
@@ -164,10 +164,9 @@ namespace TwitchChat
 
             TwitchLoginInfo loginInfo = settings.GetLoginInfo();
             
-
-            commandQueue.Enqueue($"PASS {loginInfo.password.ToLower()}");
-            commandQueue.Enqueue($"NICK {loginInfo.user.ToLower()}");
-            commandQueue.Enqueue("CAP REQ :twitch.tv/tags twitch.tv/commands");
+            SendCommand($"PASS {loginInfo.password.ToLower()}");
+            SendCommand($"NICK {loginInfo.user.ToLower()}");
+            SendCommand("CAP REQ :twitch.tv/tags twitch.tv/commands");
         }
 
         private void IRCInputProcedure()
@@ -197,7 +196,7 @@ namespace TwitchChat
 
             string buffer = input.ReadLine();
 #if UNITY_EDITOR
-            if (settings.debugMode) Debug.Log(buffer);
+            if (settings.debugMode) Debug.Log($"<color=blue>-></color> {buffer}");
 #endif
 
             recievedMsgs.Add(buffer);
@@ -212,11 +211,13 @@ namespace TwitchChat
                 //have enough time passed since we last sent a message/command?
                 if (timer > 1.750f)
                 {
+#if UNITY_EDITOR
+                    if(settings.debugMode) Debug.Log($"<color=green><-</color> {commandQueue.Peek()}");
+#endif
+                    
                     //send msg.
-                    output.WriteLine(commandQueue.Peek());
+                    output.WriteLine(commandQueue.Dequeue());
                     output.Flush();
-                    //remove msg from queue.
-                    commandQueue.Dequeue();
                     //restart stopwatch.
                     timer = 0;
                 }
@@ -264,17 +265,16 @@ namespace TwitchChat
                         break;
                 }
             }
-
             // Respond to PING messages with PONG
             if (msg.StartsWith("PING"))
                 Pong();
         }
 
-        private void SendCommand(string cmd)
+        private static void SendCommand(string cmd)
         {
-            lock (commandQueue)
+            lock (instance.commandQueue)
             {
-                commandQueue.Enqueue(cmd);
+                instance.commandQueue.Enqueue(cmd);
             }
         }
 
@@ -293,7 +293,7 @@ namespace TwitchChat
             }
 
             // Place the chat message into the write queue
-            instance.SendCommand("PRIVMSG #" + instance.currentChannelName + " :" + message);
+            SendCommand("PRIVMSG #" + instance.currentChannelName + " :" + message);
         }
 
         #region Response Handlers
