@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TwitchChat
+namespace VerySimpleTwitchChat
 {
     [System.Serializable]
     public struct ChatterEmote

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace TwitchChat
+namespace VerySimpleTwitchChat
 {
     internal static class ParseHelper
     {

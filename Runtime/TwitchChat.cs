@@ -4,22 +4,22 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.IO;
 
-namespace TwitchChat
+namespace VerySimpleTwitchChat
 {
     [AddComponentMenu("")]
-    public class TwitchController : MonoBehaviour
+    public class TwitchChat : MonoBehaviour
     {
-        private string currentChannelName = "";
+        private string currentMainChannelName = "";
         public bool isConnectedToIRC { get; private set; }
         public bool hasJoinedChannel { get; private set; }
 
-        private TwitchSettings settings;
+        private TwitchChatSettings settings;
 
         private IRCTags channelTags;
 
         #region SINGLETON
 
-        private static TwitchController instance;
+        private static TwitchChat instance;
 
         private void Awake()
         {
@@ -34,7 +34,7 @@ namespace TwitchChat
         public delegate void OnTwitchMessageReceived(Chatter chatter);
 
         public static OnTwitchMessageReceived onTwitchMessageReceived;
-        
+
         public delegate void OnChannelTagsReceived(IRCTags tags);
 
         public static OnChannelTagsReceived onChannelTagsReceived;
@@ -54,10 +54,10 @@ namespace TwitchChat
         private float retryTimer;
 
         private int connectionTries;
-        
+
         private readonly int sessionRandom = DateTime.Now.Second;
-        
-        
+
+
         public static void Ping() => SendCommand("PING :tmi.twitch.tv");
         private static void Pong() => SendCommand("PONG :tmi.twitch.tv");
 
@@ -78,48 +78,48 @@ namespace TwitchChat
                 recievedMsgs.Clear();
             }
         }
-        
+
         public static void Login(string channel)
         {
-            // Attempt to load the TwitchSettings asset from Resources folder
-            TwitchSettings defaultTwitchSettings = Resources.Load<TwitchSettings>("defaultTwitchSettings");
+            // Attempt to load the TwitchChatSettings asset from Resources folder
+            TwitchChatSettings defaultTwitchChatSettings =
+                Resources.Load<TwitchChatSettings>("defaultTwitchChatSettings");
 
             // If the asset doesn't exist, create a new
-            if (defaultTwitchSettings == null)
+            if (defaultTwitchChatSettings == null)
             {
-                defaultTwitchSettings = ScriptableObject.CreateInstance<TwitchSettings>();
-                // Optionally, you can initialize defaultTwitchSettings with default values
-                // defaultTwitchSettings.InitializeDefaultValues();
+                defaultTwitchChatSettings = ScriptableObject.CreateInstance<TwitchChatSettings>();
+                // Optionally, you can initialize defaultTwitchChatSettings with default values
+                // defaultTwitchChatSettings.InitializeDefaultValues();
             }
 
-            UpdateTwitchInstance(TrimChannelName(channel), defaultTwitchSettings);
+            UpdateTwitchChatInstance(TrimChannelName(channel), defaultTwitchChatSettings);
         }
 
-        public static void Login(string channel, TwitchSettings settings)
+        public static void Login(string channel, TwitchChatSettings settings)
         {
-            UpdateTwitchInstance(TrimChannelName(channel), settings);
+            UpdateTwitchChatInstance(TrimChannelName(channel), settings);
         }
-        
+
         public static void Login(string channel, TwitchLoginInfo loginInfo)
         {
-            
-            //TwitchSettings defaultTwitchSettings = Resources.Load<TwitchSettings>("defaultTwitchSettings");
-            TwitchSettings defaultTwitchSettings = Resources.Load<TwitchSettings>("defaultTwitchSettings");
+            //TwitchChatSettings defaultTwitchChatSettings = Resources.Load<TwitchChatSettings>("defaultTwitchChatSettings");
+            TwitchChatSettings defaultTwitchChatSettings =
+                Resources.Load<TwitchChatSettings>("defaultTwitchChatSettings");
 
             // If the asset doesn't exist, create a new
-            if (defaultTwitchSettings == null)
+            if (defaultTwitchChatSettings == null)
             {
-                defaultTwitchSettings = ScriptableObject.CreateInstance<TwitchSettings>();
-                // Optionally, you can initialize defaultTwitchSettings with default values
-                // defaultTwitchSettings.InitializeDefaultValues();
+                defaultTwitchChatSettings = ScriptableObject.CreateInstance<TwitchChatSettings>();
+                // Optionally, you can initialize defaultTwitchChatSettings with default values
+                // defaultTwitchChatSettings.InitializeDefaultValues();
             }
 
-            defaultTwitchSettings.useAnonymousConnection = false;
-            defaultTwitchSettings.oAuthToken = loginInfo.password;
-            defaultTwitchSettings.username = loginInfo.user;
+            defaultTwitchChatSettings.useAnonymousConnection = false;
+            defaultTwitchChatSettings.oAuthToken = loginInfo.password;
+            defaultTwitchChatSettings.username = loginInfo.user;
 
-            UpdateTwitchInstance(TrimChannelName(channel), defaultTwitchSettings);
-
+            UpdateTwitchChatInstance(TrimChannelName(channel), defaultTwitchChatSettings);
         }
 
         private static string TrimChannelName(string channel)
@@ -129,16 +129,16 @@ namespace TwitchChat
             return channel.Substring(startIndex, channel.Length - startIndex);
         }
 
-        private static void UpdateTwitchInstance(string channelName, TwitchSettings twitchSettings)
+        private static void UpdateTwitchChatInstance(string channelName, TwitchChatSettings twitchChatSettings)
         {
             if (instance == null)
             {
-                GameObject go = new GameObject("TwitchController");
-                instance = go.AddComponent<TwitchController>();
+                GameObject go = new GameObject("TwitchChat");
+                instance = go.AddComponent<TwitchChat>();
             }
 
-            instance.currentChannelName = channelName;
-            instance.settings = twitchSettings;
+            instance.currentMainChannelName = channelName;
+            instance.settings = twitchChatSettings;
             instance.StartIRC();
         }
 
@@ -163,7 +163,7 @@ namespace TwitchChat
             output = new StreamWriter(networkStream);
 
             TwitchLoginInfo loginInfo = settings.GetLoginInfo();
-            
+
             SendCommand($"PASS {loginInfo.password.ToLower()}");
             SendCommand($"NICK {loginInfo.user.ToLower()}");
             SendCommand("CAP REQ :twitch.tv/tags twitch.tv/commands");
@@ -212,9 +212,9 @@ namespace TwitchChat
                 if (timer > 1.750f)
                 {
 #if UNITY_EDITOR
-                    if(settings.debugMode) Debug.Log($"<color=green><-</color> {commandQueue.Peek()}");
+                    if (settings.debugMode) Debug.Log($"<color=green><-</color> {commandQueue.Peek()}");
 #endif
-                    
+
                     //send msg.
                     output.WriteLine(commandQueue.Dequeue());
                     output.Flush();
@@ -223,7 +223,7 @@ namespace TwitchChat
                 }
             }
         }
-        
+
         private void ParseChatMessage(string msg)
         {
             string ircString = msg;
@@ -265,6 +265,7 @@ namespace TwitchChat
                         break;
                 }
             }
+
             // Respond to PING messages with PONG
             if (msg.StartsWith("PING"))
                 Pong();
@@ -278,7 +279,12 @@ namespace TwitchChat
             }
         }
 
-        public static void SendChatMessage(string message)
+        public void JoinChannel(string channelName)
+        {
+            SendCommand("JOIN #" + channelName);
+        }
+
+        public static void SendChatMessage(string message, string channelName = null)
         {
             if (message.Length <= 0)
             {
@@ -288,12 +294,14 @@ namespace TwitchChat
 
             if (instance.settings.useAnonymousConnection)
             {
-                Debug.LogWarning("You can't send messages using anonymous connection. Please use a OAuth Token with writing permissions instead");
+                Debug.LogWarning(
+                    "You can't send messages using anonymous connection. Please use a OAuth Token with writing permissions instead");
                 return;
             }
 
             // Place the chat message into the write queue
-            SendCommand("PRIVMSG #" + instance.currentChannelName + " :" + message);
+            SendCommand(
+                $"PRIVMSG #{(String.IsNullOrEmpty(channelName) ? instance.currentMainChannelName : channelName.ToLower())} :{message}");
         }
 
         #region Response Handlers
@@ -321,12 +329,12 @@ namespace TwitchChat
             // Queue new chatter object
             onTwitchMessageReceived?.Invoke(new Chatter(login, channel, message, tags));
         }
-        
+
         private void HandleUSERSTATE(string ircString, string tagString)
         {
             IRCTags tags = ParseHelper.ParseTags(tagString);
         }
-        
+
         private void HandleNOTICE(string ircString, string tagString)
         {
             if (ircString.Contains(":Login authentication failed"))
@@ -334,21 +342,21 @@ namespace TwitchChat
                 Debug.Log("Login authentication failed");
             }
         }
-        
+
         private void HandleROOMSTATE(string ircString, string tagString)
         {
             channelTags = ParseHelper.ParseTags(tagString);
             onChannelTagsReceived?.Invoke(channelTags);
         }
-        
+
         private void HandleRPL(string type)
         {
             switch (type)
             {
                 case "001":
-                    SendCommand("JOIN #" + currentChannelName.ToLower());
+                    JoinChannel(currentMainChannelName.ToLower());
                     isConnectedToIRC = true;
-                    
+
                     hasJoinedChannel = true;
                     onChannelJoined?.Invoke();
                     break;

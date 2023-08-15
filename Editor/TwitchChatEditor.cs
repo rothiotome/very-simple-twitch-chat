@@ -1,10 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace TwitchChat
+namespace VerySimpleTwitchChat
 {
-    [CustomEditor(typeof(TwitchController))]
-    public class TwitchControllerEditor : Editor
+    [CustomEditor(typeof(TwitchChat))]
+    public class TwitchChatEditor : Editor
     {
         private GUIStyle greenLabelStyle = new GUIStyle(EditorStyles.label);
         private GUIStyle redLabelStyle = new GUIStyle(EditorStyles.label);
@@ -29,12 +29,12 @@ namespace TwitchChat
             GUIStyle redLabelStyle = new GUIStyle(EditorStyles.label);
             redLabelStyle.normal.textColor = Color.red;
 
-            TwitchController twitchController = (TwitchController)target;
+            TwitchChat twitchChat = (TwitchChat)target;
             EditorGUILayout.LabelField("Connected to IRC",
-                twitchController.isConnectedToIRC ? "Connected" : "Not Connected",
-                twitchController.isConnectedToIRC ? greenLabelStyle : redLabelStyle);
-            EditorGUILayout.LabelField("Channel Joined", twitchController.hasJoinedChannel ? "YAY" : "Not yet",
-                twitchController.hasJoinedChannel ? greenLabelStyle : redLabelStyle);
+                twitchChat.isConnectedToIRC ? "Connected" : "Not Connected",
+                twitchChat.isConnectedToIRC ? greenLabelStyle : redLabelStyle);
+            EditorGUILayout.LabelField("Channel Joined", twitchChat.hasJoinedChannel ? "YAY" : "Not yet",
+                twitchChat.hasJoinedChannel ? greenLabelStyle : redLabelStyle);
         }
     }
 }

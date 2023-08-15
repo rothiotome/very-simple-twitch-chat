@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Twitch Settings", fileName = "TwitchSettings", order = 0)]
-public class TwitchSettings : ScriptableObject
+[CreateAssetMenu(menuName = "Twitch Chat Settings", fileName = "TwitchChatSettings", order = 0)]
+public class TwitchChatSettings : ScriptableObject
 {
     public float secondsToRetry = 5;
     public int maxRetry = 10;

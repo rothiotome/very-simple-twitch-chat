@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TwitchChat
+namespace VerySimpleTwitchChat
 {
     [System.Serializable]
     public class Chatter
@@ -66,6 +66,11 @@ namespace TwitchChat
         public bool IsCommand(string command)
         {
             return message.StartsWith($"!{command}");
+        }
+
+        public bool IsFromChannel(string channelName)
+        {
+            return channel.Equals(channelName);
         }
     }
 }

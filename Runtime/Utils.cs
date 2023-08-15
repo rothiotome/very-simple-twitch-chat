@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace TwitchChat
+namespace VerySimpleTwitchChat
 {
     /// <summary>
     /// https://www.ietf.org/rfc/rfc1459.txt (starting on page 42 - Replies)
