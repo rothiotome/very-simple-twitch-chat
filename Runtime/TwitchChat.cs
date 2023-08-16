@@ -10,6 +10,8 @@ namespace VerySimpleTwitchChat
     public class TwitchChat : MonoBehaviour
     {
         private string currentMainChannelName = "";
+
+        private List<string> secondaryChannelNames = new List<string>();
         public bool isConnectedToIRC { get; private set; }
         public bool hasJoinedChannel { get; private set; }
 
@@ -56,8 +58,7 @@ namespace VerySimpleTwitchChat
         private int connectionTries;
 
         private readonly int sessionRandom = DateTime.Now.Second;
-
-
+        
         public static void Ping() => SendCommand("PING :tmi.twitch.tv");
         private static void Pong() => SendCommand("PONG :tmi.twitch.tv");
 
@@ -279,8 +280,14 @@ namespace VerySimpleTwitchChat
             }
         }
 
-        public void JoinChannel(string channelName)
+        public static void JoinChannel(string channelName)
         {
+            if (instance == null)
+            {
+                Debug.LogWarning($"Can't join the channel {channelName}: To join a secondary channel(s), you must login your primary channel first!");
+                return;
+            }
+            instance.secondaryChannelNames.Add(channelName);
             SendCommand("JOIN #" + channelName);
         }
 
@@ -292,10 +299,23 @@ namespace VerySimpleTwitchChat
                 return;
             }
 
+            if (instance == null)
+            {
+                Debug.LogWarning($"Can't send a message before the login!");
+                return;
+            }
+
             if (instance.settings.useAnonymousConnection)
             {
                 Debug.LogWarning(
                     "You can't send messages using anonymous connection. Please use a OAuth Token with writing permissions instead");
+                return;
+            }
+
+            if (!String.IsNullOrEmpty(channelName) && channelName.Equals(instance.currentMainChannelName) &&
+                !instance.secondaryChannelNames.Contains(channelName))
+            {
+                Debug.LogWarning($"You must join the channel {channelName} first to send messages!");
                 return;
             }
 
