@@ -58,7 +58,7 @@ namespace VerySimpleTwitchChat
         private int connectionTries;
 
         private readonly int sessionRandom = DateTime.Now.Second;
-        
+
         public static void Ping() => SendCommand("PING :tmi.twitch.tv");
         private static void Pong() => SendCommand("PONG :tmi.twitch.tv");
 
@@ -284,11 +284,31 @@ namespace VerySimpleTwitchChat
         {
             if (instance == null)
             {
-                Debug.LogWarning($"Can't join the channel {channelName}: To join a secondary channel(s), you must login your primary channel first!");
+                Debug.LogWarning(
+                    $"Can't join the channel {channelName}: To join a secondary channel(s), you must login your primary channel first!");
                 return;
             }
+
             instance.secondaryChannelNames.Add(channelName);
             SendCommand("JOIN #" + channelName);
+        }
+
+        public static bool LeaveChannel(string channelName)
+        {
+            if (instance == null)
+            {
+                Debug.LogWarning($"Can't leave a channel because you didn't join any channels yet");
+                return false;
+            }
+
+            if (instance.secondaryChannelNames.Remove(channelName))
+            {
+                SendCommand("PART #" + channelName);
+                return true;
+            }
+
+            Debug.LogWarning($"Can't leave {channelName} because you were not in that channel!");
+            return false;
         }
 
         public static void SendChatMessage(string message, string channelName = null)

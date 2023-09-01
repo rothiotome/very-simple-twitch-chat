@@ -72,5 +72,10 @@ namespace VerySimpleTwitchChat
         {
             return channel.Equals(channelName);
         }
+
+        public bool IsBroadcaster()
+        {
+            return HasBadge("broadcaster");
+        }
     }
 }

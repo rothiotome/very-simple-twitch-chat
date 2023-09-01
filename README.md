@@ -104,7 +104,7 @@ public class TestingChat : MonoBehaviour
 To send chat messages you can use the ``TwitchChat.SendChatMessage("message")`` static method. Sending chat messages is only available when you use OAuth connection method with a Token that has writting permissions.
 
 ## Join a Second Twitch Channel
-Very Simple Twitch Chat will automatically join the channel you use in the login method. However, this plugin supports multi channel join, so you will be able to Join a second channel (and virtually infinite of them) by using the ``TwitchChat.Join("channelName")`` method. To know if a message has been received in your main channel or another one, you can use the method ```Chatter.IsFromChannel("channelName")```.
+Very Simple Twitch Chat will automatically join the channel you use in the login method. However, this plugin supports multi channel join, so you will be able to Join a second channel (and virtually infinite of them) by using the ``TwitchChat.JoinChannel("channelName")`` method. To know if a message has been received in your main channel or another one, you can use the method ```Chatter.IsFromChannel("channelName")```. To leave a channel you've previously joined, you can use the method ``TwitchChat.LeaveChannel("channelName)``.
 
 > Note: Sometimes the Channel Joined event occurs a few seconds before the messages start arriving. Please be aware of the delay
 
