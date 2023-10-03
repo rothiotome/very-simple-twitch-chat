@@ -68,14 +68,36 @@ namespace VerySimpleTwitchChat
             return message.StartsWith($"!{command}");
         }
 
+        /// <summary>
+        /// Returns true if the message has been sent to a given channel
+        /// <para>The channel name</para>
+        /// </summary>
         public bool IsFromChannel(string channelName)
         {
-            return channel.Equals(channelName);
+            return channel.Equals(channelName.ToLower());
         }
-
+        /// <summary>
+        /// Returns true if the chatter is the broadcaster of the channel where the message was sent.
+        /// </summary>
         public bool IsBroadcaster()
         {
             return HasBadge("broadcaster");
+        }
+
+        /// <summary>
+        /// Returns true if the chatter is subscriber of the channel where the message was sent.
+        /// </summary>
+        public bool IsSub()
+        {
+            return HasBadge("subscriber");
+        }
+
+        /// <summary>
+        /// Returns true if the chatter is moderator of the channel where the message was sent.
+        /// </summary>
+        public bool IsMod()
+        {
+            return HasBadge("moderator");
         }
     }
 }
