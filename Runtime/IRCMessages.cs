@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace VerySimpleTwitchChat
 {
@@ -35,24 +36,12 @@ namespace VerySimpleTwitchChat
 
         public bool ContainsEmote(string emoteId)
         {
-            foreach (ChatterEmote e in emotes)
-            {
-                if (e.id == emoteId)
-                    return true;
-            }
-
-            return false;
+            return emotes.Any(b => b.id == emoteId);
         }
 
         public bool HasBadge(string badge)
         {
-            foreach (ChatterBadge b in badges)
-            {
-                if (b.id == badge)
-                    return true;
-            }
-
-            return false;
+            return badges.Any(b => b.id == badge);
         }
     }
 }
